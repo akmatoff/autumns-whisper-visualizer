@@ -80,6 +80,10 @@ app.stage.addChild(backSpruces);
 app.stage.addChild(hills);
 app.stage.addChild(spruces);
 
+// Filters
+const blurFilter = new PIXI.filters.BlurFilter();
+spruces.filters = [blurFilter]
+
 function animate() {
     requestAnimationFrame(animate);
     analyser.getByteFrequencyData(fqData);
@@ -87,7 +91,9 @@ function animate() {
     cityLights1.alpha = fqData[46] * 0.01;
     cityLights2.alpha = fqData[193] * 0.01;
     cityLights3.alpha = fqData[235] * 0.1;
-    cityLights4.alpha = fqData[300] * 0.1;
+    cityLights4.alpha = fqData[46] * 0.1;
+
+    blurFilter.blur = 3 - fqData[200] * 0.04;
 
 }
 
