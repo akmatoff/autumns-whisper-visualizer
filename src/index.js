@@ -16,11 +16,18 @@ var audio = document.querySelector('#audio');
 var audioSrc = ctx.createMediaElementSource(audio);
 var analyser = ctx.createAnalyser();
 analyser.fftSize = 1024;
-audio.play();
 audio.loop = true;
 audioSrc.connect(analyser);
 audioSrc.connect(ctx.destination);
 var fqData = new Uint8Array(analyser.frequencyBinCount);
+
+// Play Audio Button
+const playButton = document.querySelector('#playButton');
+playButton.addEventListener('click', () => {
+    audio.play();
+    playButton.style.opacity = 0;
+    playButton.style.pointerEvents = 'none';
+});
 
 // Determine the center of screen
 var halfX = app.view.width / 2;
@@ -40,6 +47,7 @@ const city = PIXI.Sprite.from('assets/Moon-City-No-Lights.png');
 city.anchor.set(0.5); // center the sprite's anchor point
 city.x = halfX;
 city.y = halfY;
+city.interactive = true;
 
 // Spruces Sprite
 const spruces = PIXI.Sprite.from('assets/Spruces.png');
@@ -101,30 +109,32 @@ const glitchFilter = new PIXI.filters.GlitchFilter();
 const rainBlur = new PIXI.filters.BlurFilter();
 rainBlur.blur = 0;
 
+const glowFilter = new PIXI.filters.GlowFilter({ color: 0xffb489, distance: 15, outerStrength: 1 });
+const cityLightGlow = new PIXI.filters.GlowFilter({ color: 0xf9896d, distance: 3, outerStrength: 1.2 });
+
 app.stage.filters = [glitchFilter]
+city.filters = [glowFilter]
+cityLights1.filters = [cityLightGlow]
+cityLights2.filters = [cityLightGlow]
+cityLights3.filters = [cityLightGlow]
+cityLights4.filters = [cityLightGlow]
 
-// var raindropTexture = PIXI.Texture.from('assets/raindrops.png');
+const mouse = new PIXI.Graphics();
+mouse.lineStyle(0);
+mouse.beginFill(0xF1F1F1);
+mouse.drawCircle(0, 0, 3);
+mouse.endFill();
 
-// var raindrops = new PIXI.Container();
-// var count = 0;
-// app.stage.addChild(raindrops);
+app.stage.addChild(mouse);
 
-// setInterval(() => {
-//     // Raindrops Sprite
-//     const raindrop = new PIXI.Sprite(raindropTexture);
-//     raindrop.filters = [rainBlur]
-//     raindrop.anchor.set(0.5);
-//     raindrop.alpha = 0.5 + Math.random();
-//     rainBlur.blur = Math.random() * 5;
-//     raindrop.scale.set(Math.random() * 0.02, Math.random() * 0.02);
-//     raindrop.x = Math.random() * app.screen.width;
-//     raindrop.y = Math.random() * app.screen.height;
-//     raindrops.addChild(raindrop);
-//     count++;
-// }, 1000 / 60);
+app.stage.interactive = true;
+app.stage.on('pointermove', mouseMove);
+app.stage.mousedown = () => {
+    mouse.color = 0xdd3d3d3;
+    console.log('down')
+}
 
-function animate() {
-    requestAnimationFrame(animate);
+app.ticker.add(() => {
     analyser.getByteFrequencyData(fqData);
 
     cityLights1.alpha = fqData[46] * 0.01;
@@ -137,8 +147,16 @@ function animate() {
     glitchFilter.seed = Math.random();
     glitchFilter.slices = fqData[235] * 0.3;
 
-    container.scale.set(containerScale + fqData[193] * 0.0001, containerScale + fqData[193] * 0.0001);
+    container.scale.set(containerScale + fqData[193] * 0.00005, containerScale + fqData[193] * 0.00005);
+    container.x = halfX + fqData[193] * 0.001;
+    container.y = halfY + fqData[193] * 0.001;
+});
 
+function mouseMove(e) {
+    let pos = e.data.global;
+
+    mouse.x = pos.x;
+    mouse.y = pos.y;
 }
 
 function onWindowResize() {
@@ -147,6 +165,9 @@ function onWindowResize() {
     container.pivot.set(halfX, halfY);
 }
 
-animate();
-
 window.addEventListener('resize', onWindowResize, false);
+window.onmousemove = (e) => {
+    document.querySelector('#app').style.transform = `translate(-${e.clientX * 0.05}px, -${e.clientY * 0.05}px)`;
+    // document.querySelector('#app').style.transform = `rotateZ(-${e.clientX * 0.1}deg)`;
+    container.rotation = e.clientX * 0.00003;
+}
