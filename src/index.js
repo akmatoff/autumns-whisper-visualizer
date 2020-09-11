@@ -23,8 +23,8 @@ audioSrc.connect(ctx.destination);
 var fqData = new Uint8Array(analyser.frequencyBinCount);
 
 // Determine the center of screen
-var halfX = app.screen.width / 2;
-var halfY = app.screen.height / 2;
+var halfX = app.view.width / 2;
+var halfY = app.view.height / 2;
 
 // Container
 const container = new PIXI.Container();
@@ -103,11 +103,11 @@ rainBlur.blur = 0;
 
 app.stage.filters = [glitchFilter]
 
-var raindropTexture = PIXI.Texture.from('assets/raindrops.png');
+// var raindropTexture = PIXI.Texture.from('assets/raindrops.png');
 
-var raindrops = new PIXI.Container();
-var count = 0;
-app.stage.addChild(raindrops);
+// var raindrops = new PIXI.Container();
+// var count = 0;
+// app.stage.addChild(raindrops);
 
 // setInterval(() => {
 //     // Raindrops Sprite
