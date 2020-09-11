@@ -6,6 +6,8 @@ const app = new PIXI.Application(
         resizeTo: window
     });
 
+app.stage.filterArea = app.screen;
+
 document.getElementById("app").appendChild(app.view);
 
 // Audio
@@ -14,15 +16,23 @@ var audio = document.querySelector('#audio');
 var audioSrc = ctx.createMediaElementSource(audio);
 var analyser = ctx.createAnalyser();
 analyser.fftSize = 1024;
-
+audio.play();
+audio.loop = true;
 audioSrc.connect(analyser);
 audioSrc.connect(ctx.destination);
 var fqData = new Uint8Array(analyser.frequencyBinCount);
 
-
 // Determine the center of screen
 var halfX = app.screen.width / 2;
 var halfY = app.screen.height / 2;
+
+// Container
+const container = new PIXI.Container();
+let containerScale = 0.7;
+container.scale.set(containerScale, containerScale);
+container.x = halfX;
+container.y = halfY;
+container.pivot.set(halfX, halfY);
 
 // Sprite Loading
 // City Sprite
@@ -70,19 +80,48 @@ hills.anchor.set(0.5);
 hills.x = halfX;
 hills.y = halfY;
 
+app.stage.addChild(container);
+
 // Add sprite to the stage
-app.stage.addChild(city);
-app.stage.addChild(cityLights1);
-app.stage.addChild(cityLights2);
-app.stage.addChild(cityLights3);
-app.stage.addChild(cityLights4);
-app.stage.addChild(backSpruces);
-app.stage.addChild(hills);
-app.stage.addChild(spruces);
+container.addChild(city);
+container.addChild(cityLights1);
+container.addChild(cityLights2);
+container.addChild(cityLights3);
+container.addChild(cityLights4);
+container.addChild(backSpruces);
+container.addChild(hills);
+container.addChild(spruces);
 
 // Filters
 const blurFilter = new PIXI.filters.BlurFilter();
 spruces.filters = [blurFilter]
+
+const glitchFilter = new PIXI.filters.GlitchFilter();
+
+const rainBlur = new PIXI.filters.BlurFilter();
+rainBlur.blur = 0;
+
+app.stage.filters = [glitchFilter]
+
+var raindropTexture = PIXI.Texture.from('assets/raindrops.png');
+
+var raindrops = new PIXI.Container();
+var count = 0;
+app.stage.addChild(raindrops);
+
+// setInterval(() => {
+//     // Raindrops Sprite
+//     const raindrop = new PIXI.Sprite(raindropTexture);
+//     raindrop.filters = [rainBlur]
+//     raindrop.anchor.set(0.5);
+//     raindrop.alpha = 0.5 + Math.random();
+//     rainBlur.blur = Math.random() * 5;
+//     raindrop.scale.set(Math.random() * 0.02, Math.random() * 0.02);
+//     raindrop.x = Math.random() * app.screen.width;
+//     raindrop.y = Math.random() * app.screen.height;
+//     raindrops.addChild(raindrop);
+//     count++;
+// }, 1000 / 60);
 
 function animate() {
     requestAnimationFrame(animate);
@@ -94,7 +133,20 @@ function animate() {
     cityLights4.alpha = fqData[46] * 0.1;
 
     blurFilter.blur = 3 - fqData[200] * 0.04;
+    glitchFilter.offset = fqData[193] * 0.1;
+    glitchFilter.seed = Math.random();
+    glitchFilter.slices = fqData[235] * 0.3;
+
+    container.scale.set(containerScale + fqData[193] * 0.0001, containerScale + fqData[193] * 0.0001);
 
 }
 
+function onWindowResize() {
+    halfX = window.innerWidth / 2;
+    halfY = window.innerHeight / 2;
+    container.pivot.set(halfX, halfY);
+}
+
 animate();
+
+window.addEventListener('resize', onWindowResize, false);
